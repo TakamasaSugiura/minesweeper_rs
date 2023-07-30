@@ -1,3 +1,20 @@
+/*
+    Copyright (C) 2023 Takamasa Sugiura
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 extern crate ncurses;
 
 use ncurses::*;
@@ -6,6 +23,11 @@ use regex::Regex;
 
 const WIDTH:usize = 8;
 const HEIGHT:usize = 8;
+
+struct Point {
+    x: u8,
+    y: u8,
+}
 
 fn main()
 {
@@ -21,56 +43,55 @@ fn main()
         let mut s = String::new();
         mvgetnstr(13, 0, &mut s, 2);
 
-        let location = get_location(s);
-        if location.0 < 0 {
-            continue;
-        }
-        if first_time {
-            table[1][usize::from(location.0 as u8)][usize::from(location.1 as u8)] = 1;
-            init_table(&mut table);
-            first_time = false;
-            table[1][usize::from(location.0 as u8)][usize::from(location.1 as u8)] = 0;
-        }
+        if let Ok(location) = get_location(s) {
+            if first_time {
+                table[1][usize::from(location.y)][usize::from(location.x)] = 1;
+                init_table(&mut table);
+                first_time = false;
+                table[1][usize::from(location.y)][usize::from(location.x)] = 0;
+            }
         
-        let ret = open(&mut table, location.0.try_into().unwrap(), location.1.try_into().unwrap());
+            let ret = open(&mut table, location.y.try_into().unwrap(), location.x.try_into().unwrap());
 
-        clear();
-        display_table(&mut table);
-        refresh();
+            clear();
+            display_table(&mut table);
+            refresh();
 
-        if ret == 1 {
-            mvaddstr(13, 0, "GAME OVER");
-            break;
+            if ret == 1 {
+                mvaddstr(13, 0, "GAME OVER");
+                break;
+            }
+            if is_cleared(&mut table[1]) {
+                mvaddstr(13, 0, "GAME CLEAR");
+                break;
+            }
         }
-        if is_cleared(&mut table[1]) {
-            mvaddstr(13, 0, "GAME CLEAR");
-            break;
+        else {
+            continue;
         }
     }
 
     refresh();
-
     getch();
-
     endwin();
 }
 
-fn get_location(input: String) -> (i8, i8) {
+fn get_location(input: String) -> Result<Point, String> {
     if input.len() != 2 {
-        return (-1, -1);
+        return Err("Bad input".to_string());
     }
     let exam = input.to_uppercase();
     let re = Regex::new("[A-H][1-8]").unwrap();
     if !re.is_match(&exam) {
-        return (-1, -1);
+        return Err("Bad input".to_string());
     }
     let col_char = exam.chars().nth(0).unwrap();
-    let col = col_char as i8 - 'A' as i8;
+    let col = col_char as u8 - 'A' as u8;
 
     let row_char = exam.chars().nth(1).unwrap();
-    let row = row_char as i8 - '1' as i8; 
+    let row = row_char as u8 - '1' as u8; 
 
-    return (row, col);
+    return Ok(Point{y: row, x: col});
 }
 
 fn init_table(table: &mut[[[i8; WIDTH]; HEIGHT]; 2]){
