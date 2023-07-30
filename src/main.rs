@@ -51,11 +51,10 @@ fn main()
                 table[1][usize::from(location.y)][usize::from(location.x)] = 0;
             }
         
-            let ret = open(&mut table, location.y.try_into().unwrap(), location.x.try_into().unwrap());
+            let ret = open(&mut table, location);
 
             clear();
             display_table(&mut table);
-            refresh();
 
             if ret == 1 {
                 mvaddstr(13, 0, "GAME OVER");
@@ -66,9 +65,7 @@ fn main()
                 break;
             }
         }
-        else {
-            continue;
-        }
+        refresh();
     }
 
     refresh();
@@ -175,22 +172,22 @@ fn display_table(table: &[[[i8; WIDTH]; HEIGHT]; 2]){
     }
 }
 
-fn open(table: &mut[[[i8; WIDTH]; HEIGHT]; 2], y:u8, x:u8) -> i32 {
+fn open(table: &mut[[[i8; WIDTH]; HEIGHT]; 2], point: Point) -> i32 {
     let width:i8 = WIDTH as i8;
     let height:i8 = HEIGHT as i8;
-    if table[1][usize::from(y)][usize::from(x)] != 0 {
+    if table[1][usize::from(point.y)][usize::from(point.x)] != 0 {
         return 2;
     }
-    table[1][usize::from(y)][usize::from(x)] = 1;
-    if table[0][usize::from(y)][usize::from(x)] == -1 {
+    table[1][usize::from(point.y)][usize::from(point.x)] = 1;
+    if table[0][usize::from(point.y)][usize::from(point.x)] == -1 {
         return 1;
     }
-    if table[0][usize::from(y)][usize::from(x)] == 0 {
-        for y_index in (y as i8 - 1)..(y as i8 + 2) {
-            for x_index in (x as i8 - 1)..(x as i8 + 2) {
-                if x_index >= 0 && x_index < width &&
-                    y_index >= 0 && y_index < height {
-                        open(table, y_index as u8, x_index as u8);
+    if table[0][usize::from(point.y)][usize::from(point.x)] == 0 {
+        for y in (point.y as i8 - 1)..(point.y as i8 + 2) {
+            for x in (point.x as i8 - 1)..(point.x as i8 + 2) {
+                if x >= 0 && x < width &&
+                    y >= 0 && y < height {
+                        open(table, Point{ y:y as u8, x:x as u8});
                     }
             }
         }
