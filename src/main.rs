@@ -176,8 +176,8 @@ fn display_table(table: &[[[i8; WIDTH]; HEIGHT]; 2]){
 }
 
 fn open(table: &mut[[[i8; WIDTH]; HEIGHT]; 2], y:u8, x:u8) -> i32 {
-    let width:u8 = WIDTH as u8;
-    let height:u8 = HEIGHT as u8;
+    let width:i8 = WIDTH as i8;
+    let height:i8 = HEIGHT as i8;
     if table[1][usize::from(y)][usize::from(x)] != 0 {
         return 2;
     }
@@ -186,29 +186,13 @@ fn open(table: &mut[[[i8; WIDTH]; HEIGHT]; 2], y:u8, x:u8) -> i32 {
         return 1;
     }
     if table[0][usize::from(y)][usize::from(x)] == 0 {
-        if x > 0 && y > 0 {
-            open(table, y - 1, x - 1);
-        }
-        if x > 0 && y < height - 1 {
-            open(table, y + 1, x - 1);
-        }
-        if x < width - 1 && y > 0 {
-            open(table, y - 1, x + 1);
-        }
-        if x < width - 1 && y < height - 1 {
-            open(table, y + 1, x + 1);
-        }
-        if x > 0 {
-            open(table, y, x - 1);
-        }
-        if y > 0 {
-            open(table, y - 1, x);
-        }
-        if x < width - 1 {
-            open(table, y, x + 1);
-        }
-        if y < height - 1 {
-            open(table, y + 1, x);
+        for y_index in (y as i8 - 1)..(y as i8 + 2) {
+            for x_index in (x as i8 - 1)..(x as i8 + 2) {
+                if x_index >= 0 && x_index < width &&
+                    y_index >= 0 && y_index < height {
+                        open(table, y_index as u8, x_index as u8);
+                    }
+            }
         }
     }
     return 0;
