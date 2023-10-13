@@ -29,9 +29,29 @@ struct Point {
     y: u8,
 }
 
+#[derive(Copy)]
+struct PosInfo {
+    number_of_bombs: i8,
+    opened: bool,
+}
+
+//impl Copy for PosInfo {}
+
+impl Clone for PosInfo {
+    fn clone(&self) -> PosInfo {
+        PosInfo{ number_of_bombs: self.number_of_bombs, opened: self.opened }
+    }
+}
+
+impl PosInfo {
+    fn new() -> PosInfo {
+        PosInfo { number_of_bombs: 0, opened: false }
+    }
+}
+
 fn main()
 {
-    let mut table = [[[0i8; WIDTH]; HEIGHT]; 2];
+    let mut table = [[PosInfo::new(); WIDTH]; HEIGHT];
     let mut first_time = true;
 
     initscr();
@@ -45,7 +65,7 @@ fn main()
 
         if let Ok(point) = get_location(s) {
             if first_time {
-                init_table(&mut table[0], &point);
+                init_table(&mut table, &point);
                 first_time = false;
             }
         
@@ -58,7 +78,7 @@ fn main()
                 mvaddstr(13, 0, "GAME OVER");
                 break;
             }
-            if is_cleared(&mut table[1]) {
+            if is_cleared(&mut table) {
                 mvaddstr(13, 0, "GAME CLEAR");
                 break;
             }
@@ -89,7 +109,7 @@ fn get_location(input: String) -> Result<Point, String> {
     return Ok(Point{y: row, x: col});
 }
 
-fn init_table(table: &mut[[i8; WIDTH]; HEIGHT], first_point: &Point){
+fn init_table(table: &mut[[PosInfo; WIDTH]; HEIGHT], first_point: &Point){
     let width:u8 = WIDTH as u8;
     let height:u8 = HEIGHT as u8;
     let mut bombs = 0;
@@ -99,9 +119,9 @@ fn init_table(table: &mut[[i8; WIDTH]; HEIGHT], first_point: &Point){
         let mut y:u8 = rng.gen();
         x = x % width;
         y = y % height;
-        if table[usize::from(y)][usize::from(x)] == 0 && 
+        if table[usize::from(y)][usize::from(x)].number_of_bombs == 0 && 
             !(first_point.x == x && first_point.y == y) {
-            table[usize::from(y)][usize::from(x)] = -1;
+            table[usize::from(y)][usize::from(x)].number_of_bombs = -1;
             bombs += 1;
         }
     }
@@ -111,25 +131,25 @@ fn init_table(table: &mut[[i8; WIDTH]; HEIGHT], first_point: &Point){
             let x_size = usize::from(x);
             let y_size = usize::from(y);
 
-            if table[y_size][x_size] == -1 {
+            if table[y_size][x_size].number_of_bombs == -1 {
                 continue;
             }
             for y_index in (y as i8 - 1)..(y as i8 + 2) {
                 for x_index in (x as i8 - 1)..(x as i8 + 2) {
                     if x_index >= 0 && x_index < width as i8 &&
                         y_index >= 0 && y_index < height as i8 {
-                            if table[usize::from(y_index as u8)][usize::from(x_index as u8)] == -1 {
+                            if table[usize::from(y_index as u8)][usize::from(x_index as u8)].number_of_bombs == -1 {
                                 cnt += 1;
                             }
                         }
                 }
             }
-            table[y_size][x_size] = cnt;
+            table[y_size][x_size].number_of_bombs = cnt;
         }
     }
 }
 
-fn display_table(table: &[[[i8; WIDTH]; HEIGHT]; 2]){
+fn display_table(table: &[[PosInfo; WIDTH]; HEIGHT]){
     mvaddstr(0, 0, "<<MINE SWEEPER>>");
     mvaddstr(2, 2, "ABCDEFGH");
     for row in 1..9 {
@@ -137,11 +157,11 @@ fn display_table(table: &[[[i8; WIDTH]; HEIGHT]; 2]){
     }
     for y in 0u8..(HEIGHT as u8) {
         for x in 0u8..(WIDTH as u8) {
-            let exam1 = table[0][usize::from(y)][usize::from(x)];
-            let exam2 = table[1][usize::from(y)][usize::from(x)];
+            let exam1 = table[usize::from(y)][usize::from(x)].number_of_bombs;
+            let exam2 = table[usize::from(y)][usize::from(x)].opened;
             let x_pos:i32 = (x + 2).into();
             let y_pos:i32 = (y + 3).into();
-            if exam2 == 1 {
+            if exam2 == true {
                 if exam1 == -1 {
                     mvaddstr(y_pos, x_pos, "B");
                 }
@@ -156,17 +176,17 @@ fn display_table(table: &[[[i8; WIDTH]; HEIGHT]; 2]){
     }
 }
 
-fn open(table: &mut[[[i8; WIDTH]; HEIGHT]; 2], point: &Point) -> i32 {
+fn open(table: &mut[[PosInfo; WIDTH]; HEIGHT], point: &Point) -> i32 {
     let width:i8 = WIDTH as i8;
     let height:i8 = HEIGHT as i8;
-    if table[1][usize::from(point.y)][usize::from(point.x)] != 0 {
+    if table[usize::from(point.y)][usize::from(point.x)].opened != false {
         return 2;
     }
-    table[1][usize::from(point.y)][usize::from(point.x)] = 1;
-    if table[0][usize::from(point.y)][usize::from(point.x)] == -1 {
+    table[usize::from(point.y)][usize::from(point.x)].opened = true;
+    if table[usize::from(point.y)][usize::from(point.x)].number_of_bombs == -1 {
         return 1;
     }
-    if table[0][usize::from(point.y)][usize::from(point.x)] == 0 {
+    if table[usize::from(point.y)][usize::from(point.x)].number_of_bombs == 0 {
         for y in (point.y as i8 - 1)..(point.y as i8 + 2) {
             for x in (point.x as i8 - 1)..(point.x as i8 + 2) {
                 if x >= 0 && x < width &&
@@ -179,12 +199,12 @@ fn open(table: &mut[[[i8; WIDTH]; HEIGHT]; 2], point: &Point) -> i32 {
     return 0;
 }
 
-fn is_cleared(table: &[[i8; WIDTH]; HEIGHT]) -> bool{
+fn is_cleared(table: &[[PosInfo; WIDTH]; HEIGHT]) -> bool{
     let mut count = 0;
     for y in 0u8..(HEIGHT as u8) {
         for x in 0u8..(WIDTH as u8) {
-            let exam = table[usize::from(y)][usize::from(x)];
-            if exam == 0 {
+            let exam = table[usize::from(y)][usize::from(x)].opened;
+            if exam == false {
                 count += 1;
             }
         }
