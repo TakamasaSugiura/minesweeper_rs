@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+option csharp_namespace = "MinesweeperService";
+
+package gacha;
+
+service Minesweeper {
+  rpc StartGame (StartGameRequest) returns (StartGameReply);
+  rpc EndGame (EndGameRequest) returns (EndGameReply);
+  rpc OpenCell (OpenCellRequest) returns (OpenCellReply);
+  rpc GetStatus (GetStatusRequest) returns (GetStatusReply);
+}
+
+message StartGameRequest {
+  string id = 1;
+  int32 rows = 2;
+  int32 cols = 3;
+  int32 number_of_bombs = 4;
+}
+
+message StartGameReply {
+  bool success = 1;
+  string message = 2;
+}
+
+message EndGameRequest {
+  string id = 1;
+}
+
+message EndGameReply {
+  bool success = 1;
+  string message = 2;
+}
+
+message OpenCellRequest {
+  string id = 1;
+  int32 x = 2;
+  int32 y = 3;
+}
+
+message OpenCellReply {
+  bool success = 1;
+  string message = 2;
+  int32 status = 3;
+  int32 x = 4;
+  int32 y = 5;
+  bool bomb = 6;
+  int32 bombs_around = 7;
+}
+
+message GetStatusRequest {
+  string id = 1;
+}
+
+message GetStatusReply {
+  int32 status = 2;
+}
