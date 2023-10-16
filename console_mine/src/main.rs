@@ -35,8 +35,6 @@ struct PosInfo {
     opened: bool,
 }
 
-//impl Copy for PosInfo {}
-
 impl Clone for PosInfo {
     fn clone(&self) -> PosInfo {
         PosInfo{ number_of_bombs: self.number_of_bombs, opened: self.opened }
